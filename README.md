@@ -9,22 +9,21 @@
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#architecture">Architecture</a> •
   <a href="#getting-started">Getting Started</a> •
-  <a href="#api-reference">API</a> •
-  <a href="#screenshots">Screenshots</a>
+  <a href="#api-reference">API</a>
 </p>
 
 ---
 
 ## What is this?
 
-ATS Resume Analyzer is a full-stack web application that helps job seekers optimize their resumes for **Applicant Tracking Systems (ATS)**. Upload your resume as a PDF, paste a job description, and get:
+ATS Resume Analyzer is a full-stack web application that helps job seekers optimize their resumes for **Applicant Tracking Systems (ATS)**. Upload your resume as a PDF, paste any job description, and get:
 
-- A **compatibility score** based on keyword matching
-- A **skill gap analysis** — what the job wants vs. what your resume has
+- A **compatibility score** visualized as an animated circular ring
+- A **skill gap analysis** — color-coded chips for matching, missing, and extra skills
 - **AI-powered suggestions** via Google Gemini to improve bullet points and formatting
 - **ATS optimization tips** tailored to your specific resume and target role
 
-Built with a clean React frontend, a secure Express API, MongoDB for persistence, and Google's Gemini 2.0 Flash model for intelligent analysis.
+Built with a React frontend (dark glassmorphism UI), a secure Express API, MongoDB for persistence, and Google's Gemini 2.0 Flash model for intelligent analysis.
 
 ---
 
@@ -33,11 +32,16 @@ Built with a clean React frontend, a secure Express API, MongoDB for persistence
 | Feature | Description |
 |---------|-------------|
 | **🔐 JWT Authentication** | Secure register / login with bcrypt-hashed passwords and stateless JWT sessions |
-| **📄 PDF Parsing** | Extracts raw text from uploaded PDF resumes using Mozilla's `pdfjs-dist` |
+| **🛡️ Auth Guard** | Unauthenticated users are automatically redirected to `/login` |
+| **🚪 Logout** | One-click logout that clears the session token |
+| **📄 Drag & Drop Upload** | Drag your PDF onto the upload zone or click to browse |
+| **✍️ Custom Job Description** | Paste any job description into the textarea — no more hardcoded demo JD |
 | **🎯 ATS Scoring** | Calculates a keyword-match score between your resume and the job description |
+| **📊 Score Ring** | Compatibility score displayed as an animated SVG circular progress ring |
+| **🏷️ Skill Chips** | Skills rendered as color-coded pill badges — green ✅ matching, red ❌ missing, yellow 🟡 extra |
 | **🤖 AI Analysis** | Google Gemini generates structured feedback: missing skills, bullet improvements, and overall assessment |
-| **🧠 Skill Gap Detection** | Side-by-side comparison of resume skills vs. job description requirements |
-| **📊 Rich Report Modal** | Clean, scrollable modal with categorized suggestions and a compatibility percentage |
+| **🎨 Premium Dark UI** | Glassmorphism cards, Inter font, gradient buttons, fade-in modal, hover micro-animations |
+| **📱 Responsive Design** | Fully mobile-friendly layout |
 | **⚡ Zero Config Dev** | Webpack dev server with built-in API proxy — no CORS headaches |
 
 ---
@@ -47,9 +51,10 @@ Built with a clean React frontend, a secure Express API, MongoDB for persistence
 ### Frontend
 - **React 18** — UI library
 - **React Router DOM v6** — Client-side routing (`/login`, `/register`, `/`)
-- **Webpack 5** — Module bundler (custom config, no CRA)
+- **Webpack 5** — Module bundler with `DefinePlugin` for env variable injection
 - **Babel** — JSX / ES6+ transpilation
-- **CSS3** — Component-scoped styles (no external UI framework)
+- **CSS3** — Component-scoped styles with glassmorphism, animations (no external UI framework)
+- **Inter** — Google Font for modern typography
 
 ### Backend
 - **Node.js + Express 4** — REST API server
@@ -57,7 +62,7 @@ Built with a clean React frontend, a secure Express API, MongoDB for persistence
 - **Multer** — In-memory file upload handling
 - **pdfjs-dist** — Server-side PDF text extraction
 - **jsonwebtoken + bcrypt** — Auth layer
-- **Google Gemini API** — Generative AI for resume analysis
+- **Google Gemini API** — Generative AI for resume analysis (gemini-2.0-flash-exp)
 
 ---
 
@@ -67,13 +72,14 @@ Built with a clean React frontend, a secure Express API, MongoDB for persistence
 ATS-Analyzer/
 ├── client/                     # React SPA
 │   ├── components/
-│   │   ├── Login/              # Auth screen
-│   │   ├── Register/           # Sign-up screen
+│   │   ├── Login/              # Auth screen (dark glassmorphism)
+│   │   ├── Register/           # Sign-up screen (dark glassmorphism)
 │   │   └── YourResumes/        # Upload + analysis dashboard
-│   ├── App.jsx                 # Router setup
+│   ├── App.jsx                 # Router setup with auth guard
 │   ├── main.jsx                # React 18 createRoot entry
-│   ├── index.html              # HTML template
-│   └── webpack.config.js       # Dev + build config with API proxy
+│   ├── index.html              # HTML template + Inter font
+│   ├── .env                    # Client env vars (not committed)
+│   └── webpack.config.js       # Dev + build config with API proxy + DefinePlugin
 │
 └── server/                     # Express API
     ├── controllers/
@@ -114,7 +120,7 @@ cd ATS-Analyzer
 npm install
 ```
 
-### 2. Environment Variables
+### 2. Server Environment Variables
 
 ```bash
 cp server/.env.example server/.env
@@ -128,7 +134,17 @@ JWT_SECRET=replace_with_a_long_random_string
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 3. Start the Development Servers
+### 3. Client Environment Variables
+
+Create `client/.env`:
+
+```env
+REACT_APP_API_URL=http://localhost:5000
+```
+
+> **Note:** This file is gitignored and must be created manually after cloning. Webpack reads it at build time via `DefinePlugin`.
+
+### 4. Start the Development Servers
 
 **Terminal 1 — Backend:**
 ```bash
@@ -144,7 +160,7 @@ npm run client
 
 The React dev server proxies `/auth` and `/resume` requests to `http://localhost:5000` automatically, so everything just works.
 
-### 4. Production Build
+### 5. Production Build
 
 ```bash
 npm run client:build
@@ -202,21 +218,29 @@ The AI returns a structured JSON object:
 
 ## How It Works
 
-1. **Upload** — User selects a PDF resume. Multer buffers it in memory.
+1. **Upload** — User drags & drops or selects a PDF resume. Multer buffers it in memory.
 2. **Parse** — `pdfjs-dist` extracts plain text from every page of the PDF.
-3. **Analyze (local)** — `keywordExtractor.js` tokenizes both the resume and a hardcoded job description. `atsScore.js` computes a simple overlap percentage.
+3. **Analyze (local)** — `keywordExtractor.js` tokenizes both the resume and the user-provided job description. `atsScore.js` computes a keyword overlap percentage.
 4. **Analyze (AI)** — The full resume text + job description are sent to **Google Gemini 2.0 Flash** with a strict JSON-structured prompt.
-5. **Report** — The frontend renders a modal with the compatibility score, skill lists, missing keywords, bullet rewrites, and actionable tips.
+5. **Report** — The frontend renders a modal with an animated score ring, color-coded skill chips, bullet rewrites, and actionable tips.
 
 ---
 
 ## Environment Variables Reference
+
+### Server (`server/.env`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `MONGO_URI` | ✅ | MongoDB connection string |
 | `JWT_SECRET` | ✅ | Secret for signing JWTs |
 | `GEMINI_API_KEY` | ✅ | Google AI Studio API key |
+
+### Client (`client/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `REACT_APP_API_URL` | ✅ | Base URL of the backend API (e.g. `http://localhost:5000`) |
 
 ---
 
@@ -234,11 +258,11 @@ npm run client:build  # Production build (client/dist/)
 ## Future Roadmap
 
 - [ ] Support `.docx` resume uploads
-- [ ] Dynamic job description input (currently hardcoded for demo)
+- [x] ~~Dynamic job description input~~ — users can now paste any JD
 - [ ] Persistent analysis history per user
 - [ ] Resume storage in MongoDB GridFS
 - [ ] Enhanced keyword extraction with NLP (spaCy / natural)
-- [ ] Dark mode toggle
+- [x] ~~Dark mode toggle~~ — dark theme applied globally
 
 ---
 
