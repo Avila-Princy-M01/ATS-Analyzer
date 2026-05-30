@@ -5,12 +5,14 @@ import Register from './components/Register';
 import YourResumes from './components/YourResumes';
 
 function App() {
+    const token = localStorage.getItem("token");
+
     return (
         <Router>
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/" element={<YourResumes />} />
+                <Route path="/" element={token ? <YourResumes /> : <Navigate to="/login" />} />
             </Routes>
         </Router>
     );

@@ -1,6 +1,10 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import webpack from "webpack";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +34,9 @@ export default {
     plugins: [
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, "index.html")
+        }),
+        new webpack.DefinePlugin({
+            "process.env.REACT_APP_API_URL": JSON.stringify(process.env.REACT_APP_API_URL)
         })
     ],
     devServer: {

@@ -31,7 +31,7 @@ const Register = () => {
         setError("");
         setSuccess("");
 
-        const url = "http://localhost:5000/auth/register";
+        const url = `${process.env.REACT_APP_API_URL}/auth/register`;
         const userDetails = { name, email, password }
 
         const options = {
@@ -67,6 +67,10 @@ const Register = () => {
     return (
         <div className="auth-container">
             <form className="auth-card" onSubmit={handleSubmit}>
+                <div className="auth-brand">
+                    <span className="brand-icon">🎯</span>
+                    <span className="brand-name">ATS Analyser</span>
+                </div>
                 <h2>Register</h2>
 
                 {error && <p className="error-text">{error}</p>}

@@ -22,7 +22,7 @@ const Login = () => {
         event.preventDefault()
         setLoading(true)
         setError("")
-        const url = "http://localhost:5000/auth/login";
+        const url = `${process.env.REACT_APP_API_URL}/auth/login`;
         const userDetails = {
             email,
             password
@@ -49,6 +49,10 @@ const Login = () => {
     return (
         <div className="auth-container">
             <form className="auth-card" onSubmit={handleSubmit}>
+                <div className="auth-brand">
+                    <span className="brand-icon">🎯</span>
+                    <span className="brand-name">ATS Analyser</span>
+                </div>
                 <h2>Login</h2>
 
                 {error && <p className="error-text">{error}</p>}
